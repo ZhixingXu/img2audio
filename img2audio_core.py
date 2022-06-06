@@ -25,12 +25,8 @@ def enframe(x, win, inc=None):
         nlen = win  # 设置为帧长
     if inc is None:
         inc = nlen
-    # nf is total count of frames,nx is original data's length
     nf = (nx - nlen + inc) // inc
-    # print(nf,nx,nlen)
-    # frameout is a matrix to store all frame after framing original data
     frameout = np.zeros((nf, nlen))
-    #indf is the start postition of each frame
     indf = np.multiply(inc, np.array([i for i in range(nf)]))
     # start framing data
     for i in range(nf):
@@ -104,9 +100,19 @@ def generate_audio(pic_data:np.ndarray,aud_data:np.ndarray):
     pic_data=cv2.resize(pic_data,dsize=(tar_w,tar_h),fx=1,fy=1,interpolation=cv2.INTER_LINEAR)
     print(pic_data.shape)
     pic_data=np.mean(pic_data,axis=2)
-
     pic_data=pic_data-128
-    pic_data=pic_data*128*pic_data.shape[0]
+    print("max:",np.max(pic_data))
+    ratio=128/np.max(pic_data)
+    pic_data=ratio*pic_data
+    index=pic_data<0
+    pic_data=1.1**np.abs(pic_data)/100
+    # -----------------------------
+    if np.max(pic_data)>0x4fff:
+        ratio=np.max(pic_data)/0x4fff
+        pic_data=pic_data/ratio
+    # --------------------------------
+    pic_data[index]=-pic_data[index]
+    pic_data=pic_data*pic_data.shape[0]
     pic_data=pic_data[::-1,:]
     
     pic_data=np.r_[pic_data,pic_data[-2:0:-1,:]]
