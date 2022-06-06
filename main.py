@@ -34,22 +34,12 @@ timer = QtCore.QTimer()
 
 class MyFigure(FigureCanvasQTAgg):
     def __init__(self, parent=None, width=5, height=4, dpi=100):
-        # # 1、创建一个绘制窗口Figure对象
-        # self.fig = Figure(figsize=(width,height),dpi=dpi)
-        # # 2、在父类中激活Figure窗口,同时继承父类属性
-        # super(MyFigure, self).__init__(self.fig)
-        # -------
-        # 创建一个Figure，注意：该Figure为matplotlib下的figure，不是matplotlib.pyplot下面的figure
         self.fig = Figure(figsize=(width, height), dpi=100)
 
         FigureCanvasQTAgg.__init__(self, self.fig)  # 初始化父类
         self.setParent(parent)
         self.axes = self.fig.add_subplot(111)
-        # self.axes.set_facecolor('gray')
-        # self.fig.patch.set_facecolor('gray')
-        # self.fig.patch.set_alpha(1)
         self.fig.subplots_adjust(left=0.08, bottom=0.1, right=0.98, top=0.95,hspace=0.1,wspace=0.1)
-        # 调用figure下面的add_subplot方法，类似于matplotlib.pyplot下面的subplot方法
 
     def updata_plot(self,x,y):
         self.axes.clear()
@@ -104,31 +94,18 @@ class ImgDisp(QMainWindow,Ui_MainWindow):
             QMessageBox.critical(self, "Error", "You should input a path to picture whose format is jpg or png!")
             return
         self.F2.show_pic(pic_data)
-        # self.graphicsview_pic.
-        ...
 
     def btn_export_pressed(self,a):
-        test=0
-        if test:
-            fs=400
-            n=np.arange(1000)
-            x=np.sin(2*np.pi*15*n/fs)
+        print("shapae:",self.audio_out.shape)
+        if self.audio_out is not None:
+            try:
+                if ac.audio_export(self.audio_out):
+                    # QMessageBox.critical(self, "Success", "\'output.wav\' has been experted")
+                    QMessageBox.information(self, "Success", "\'output.wav\' has been experted")
+            except:
+                QMessageBox.critical(self, "Error", "expert error!Probably because \'output.wav\' is occupied")
 
-            self.F1.updata_plot(n,x)
-
-            print("btn pressed")
-            print('---',self.textinput_audio.text())
-        else:
-            print("shapae:",self.audio_out.shape)
-            if self.audio_out is not None:
-                try:
-                    if ac.audio_export(self.audio_out):
-                        # QMessageBox.critical(self, "Success", "\'output.wav\' has been experted")
-                        QMessageBox.information(self, "Success", "\'output.wav\' has been experted")
-                except:
-                    QMessageBox.critical(self, "Error", "expert error!Probably because \'output.wav\' is occupied")
-
-                self.audio_out=None
+            self.audio_out=None
 
     def btn_play_pressed(self,a):
         global finished
@@ -139,45 +116,32 @@ class ImgDisp(QMainWindow,Ui_MainWindow):
         if finished==False:
             return
         finished=False
-        test=0
-        if test:
-            print("btn2 pressed in")
-            fs=400
-            n=np.arange(100)
-            x=np.sin(2*np.pi*30*n/fs)
 
-            for i in range(10000):
-                x=np.r_[x[1:],x[0]+np.random.randn(1)]
-                self.F1.updata_plot(n,x)
-                time.sleep(0.02)
+        img_path=self.textinput_pic.text()
+        aud_path=self.textinput_audio.text()
+        if None==re.match('.*\.(png|jpg)',img_path):
+            QMessageBox.critical(self, "Error", "You should input a path to picture whose format is jpg or png!")
+            return
+        aud_data=None
+        try:
+            fp       = wave.Wave_read(aud_path)
+            aud_data     = fp.readframes(fp.getnframes())
+            aud_data     = np.frombuffer(aud_data, dtype='short')
+        except:
+            print("no audio for phase specgram")
 
-            print("btn2 pressed")
-        else:
-            img_path=self.textinput_pic.text()
-            aud_path=self.textinput_audio.text()
-            if None==re.match('.*\.(png|jpg)',img_path):
-                QMessageBox.critical(self, "Error", "You should input a path to picture whose format is jpg or png!")
-                return
-            aud_data=None
-            try:
-                fp       = wave.Wave_read(aud_path)
-                aud_data     = fp.readframes(fp.getnframes())
-                aud_data     = np.frombuffer(aud_data, dtype='short')
-            except:
-                print("no audio for phase specgram")
-
-            pic_data=cv2.imread(img_path)
-            # self.F2.show_pic(pic_data)
-            self.audio_out=ac.generate_audio(pic_data,aud_data)
-            # --------------------------
-            data_to_plot=self.audio_out.copy()
-            fig_handle=self.F1
-            timer.timeout.connect(plot_process)
-            # ----------------------------
-            thread1=threading.Thread(target=play_audio,args=(data_to_plot,self.F1))
-            thread1.setDaemon(True)
-            thread1.start()
-            timer.start(100)
+        pic_data=cv2.imread(img_path)
+        # self.F2.show_pic(pic_data)
+        self.audio_out=ac.generate_audio(pic_data,aud_data)
+        # --------------------------
+        data_to_plot=self.audio_out.copy()
+        fig_handle=self.F1
+        timer.timeout.connect(plot_process)
+        # ----------------------------
+        thread1=threading.Thread(target=play_audio,args=(data_to_plot,self.F1))
+        thread1.setDaemon(True)
+        thread1.start()
+        timer.start(100)
 
 def play_audio(data:np.ndarray,fig):
     global data_pointer
@@ -195,24 +159,6 @@ def plot_process():
     global data_pointer
     fig_handle.updata_plot(np.arange(data_pointer,data_pointer+16000)/16000,data_to_plot[data_pointer:data_pointer+16000])
     data_pointer+=1600
-    # print('timer:',data_pointer)
-
-# def plot_audio(data:np.ndarray,fig):
-#     global data_pointer
-#     global fig_handle
-#     global data_to_plot
-#     global timer
-#     data_to_plot=data.copy()
-#     fig_handle=fig
-#     timer.timeout.connect(plot_process)
-#     timer.start(100)
-#     print("timer.start()")
-#     while finished == False:
-#         continue
-            
-            
-            
-
 
 if __name__=='__main__':
     app=QApplication(sys.argv)
