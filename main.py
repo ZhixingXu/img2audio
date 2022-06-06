@@ -114,6 +114,10 @@ class ImgDisp(QMainWindow,Ui_MainWindow):
         global data_to_plot
         global timer
         if finished==False:
+            finished=True
+            fig_handle=None
+            data_pointer=0
+            timer.stop()
             return
         finished=False
 
@@ -153,10 +157,15 @@ def play_audio(data:np.ndarray,fig):
     finished=True
     fig_handle=None
     data_pointer=0
-    timer.stop()
 
 def plot_process():
     global data_pointer
+    global data_to_plot
+    if data_pointer>=data_to_plot.size-16000 or finished:
+        return
+    if data_pointer==0 and data_to_plot.size%16000 != 0:
+        lack=16000-data_to_plot.size%16000
+        data_to_plot=np.r_[data_to_plot,np.zeros(lack)]
     fig_handle.updata_plot(np.arange(data_pointer,data_pointer+16000)/16000,data_to_plot[data_pointer:data_pointer+16000])
     data_pointer+=1600
 

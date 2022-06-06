@@ -107,9 +107,9 @@ def generate_audio(pic_data:np.ndarray,aud_data:np.ndarray):
     index=pic_data<0
     pic_data=1.1**np.abs(pic_data)/100
     # -----------------------------
-    if np.max(pic_data)>0x4fff:
-        ratio=np.max(pic_data)/0x4fff
-        pic_data=pic_data/ratio
+    # if np.max(pic_data)>0x3fff:
+    ratio=np.max(pic_data)/0x3fff
+    pic_data=pic_data/ratio
     # --------------------------------
     pic_data[index]=-pic_data[index]
     pic_data=pic_data*pic_data.shape[0]
