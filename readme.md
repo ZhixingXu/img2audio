@@ -4,6 +4,7 @@
 
 The operation is shown in the following figure:
 ![demo](res/demo.gif)
+
 open the generated audio with Adobe Audition or other audio software,you can see this:
 ![picture 1](./res/1654480415845.png)  
 
